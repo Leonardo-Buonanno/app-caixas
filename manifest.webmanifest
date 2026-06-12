@@ -1,0 +1,25 @@
+{
+  "name": "Calculadora de Caixas",
+  "short_name": "Caixas",
+  "description": "Leitura de produtos, calculo de caixas, historico e codigos de comando para separacao.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f2a000",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "assets/logo-pauliceia-ecommerce.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/logo-pauliceia-ecommerce.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

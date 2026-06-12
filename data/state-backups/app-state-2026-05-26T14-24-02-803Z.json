@@ -1,0 +1,33 @@
+{
+    "savedAt":  "2026-05-22T12:46:04.416Z",
+    "appVersion":  "1.2.0",
+    "reason":  "limpeza_historico_auditoria",
+    "state":  {
+                  "boxes":  [
+
+                            ],
+                  "products":  [
+
+                               ],
+                  "selection":  {
+
+                                },
+                  "selectionOptions":  {
+
+                                       },
+                  "calculationMeta":  {
+                                          "reference":  "",
+                                          "user":  ""
+                                      },
+                  "history":  [
+
+                              ],
+                  "auditLog":  [
+
+                               ],
+                  "appSettings":  {
+                                      "productionMode":  false
+                                  },
+                  "stateUpdatedAt":  "2026-05-22T12:46:04.416Z"
+              }
+}

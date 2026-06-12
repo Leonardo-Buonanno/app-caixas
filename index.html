@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f2a000" />
+    <title>Calculadora de Caixas</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/logo-pauliceia-ecommerce.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand-heading">
+        <img class="brand-logo" src="assets/logo-pauliceia-ecommerce.png" alt="Pauliceia e-commerce" />
+        <div class="brand-copy">
+          <p class="eyebrow">Planejamento de armazenagem</p>
+          <div class="brand-title-row">
+            <h1>Calculadora de Caixas</h1>
+            <details class="shortcut-panel">
+              <summary>Atalhos</summary>
+              <div class="shortcut-strip" aria-label="Atalhos de teclado">
+                <span><kbd>F2</kbd> Leitura</span>
+                <span><kbd>F3</kbd> Buscar seleção</span>
+                <span><kbd>F4</kbd> Buscar cadastro</span>
+                <span><kbd>Alt+1</kbd> Home</span>
+                <span><kbd>Alt+2</kbd> Caixas</span>
+                <span><kbd>Alt+3</kbd> Produtos</span>
+                <span><kbd>Alt+4</kbd> Ajuda</span>
+                <span><kbd>Alt+5</kbd> C&oacute;digo de barras</span>
+                <span><kbd>Ctrl+Enter</kbd> Calcular</span>
+                <span><kbd>Ctrl+Z</kbd> Desfazer leitura</span>
+                <span><kbd>Ctrl+M</kbd> Modo produção</span>
+                <span><kbd>Ctrl+Backspace</kbd> Limpar seleção</span>
+                <span><kbd>Esc</kbd> Limpar/focar</span>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+      <div class="summary-strip" aria-label="Resumo de cadastros">
+        <span><strong id="box-count">0</strong> Caixas</span>
+        <span><strong id="product-count">0</strong> Produtos</span>
+        <button class="ghost-button summary-action" id="production-mode-toggle" type="button" aria-pressed="false">Modo produção</button>
+        <button class="ghost-button summary-action hidden" id="install-app-button" type="button">Instalar app</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Navega&ccedil;&atilde;o principal">
+      <button class="tab-button active" type="button" data-tab="home">Home</button>
+      <button class="tab-button" type="button" data-tab="boxes">Caixas</button>
+      <button class="tab-button" type="button" data-tab="products">Produtos</button>
+      <button class="tab-button" type="button" data-tab="help">Ajuda</button>
+      <button class="tab-button" type="button" data-tab="finalizer">C&oacute;digo de barras</button>
+    </nav>
+
+    <main>
+      <section class="tab-panel active" id="home-panel">
+        <div class="workspace-grid home-grid">
+          <section class="panel barcode-panel">
+            <div class="panel-title-row">
+              <h2>Ler produtos</h2>
+              <span class="status-pill status-pending" id="barcode-scan-count">0 Leituras</span>
+            </div>
+            <div class="barcode-scan-grid">
+              <label>
+                Código de barras
+                <input id="barcode-scan-input" type="text" inputmode="numeric" autocomplete="off" placeholder="Leia o código de barras" />
+              </label>
+              <label>
+                Quantidade por leitura
+                <input id="barcode-scan-multiplier" type="number" min="1" step="1" value="1" />
+              </label>
+              <div class="barcode-actions">
+                <button class="ghost-button" id="barcode-clear-button" type="button">Limpar</button>
+                <button class="primary-button" id="barcode-calculate-button" type="button">Calcular leitura</button>
+              </div>
+            </div>
+            <div class="barcode-status" id="barcode-scan-status" aria-live="polite">Aguardando leitura.</div>
+            <div class="barcode-unknown-actions hidden" id="barcode-unknown-actions">
+              <span>Código <strong id="barcode-unknown-code"></strong> sem cadastro.</span>
+              <button class="ghost-button" id="barcode-register-button" type="button">Cadastrar produto</button>
+            </div>
+            <div class="barcode-summary" id="barcode-scan-summary"></div>
+            <div class="barcode-read-list" id="barcode-read-list"></div>
+          </section>
+
+          <section class="panel selection-panel">
+            <div class="panel-title-row">
+              <h2>Produtos selecionados</h2>
+              <button class="ghost-button" id="clear-selection" type="button">Limpar</button>
+            </div>
+            <label class="search-field">
+              Pesquisar produto
+              <input id="product-search" type="search" placeholder="Digite o nome do produto" autocomplete="off" />
+            </label>
+            <div class="table-shell">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Pode girar</th>
+                    <th>Manter em p&eacute;</th>
+                    <th>Empilhável</th>
+                    <th>Frágil</th>
+                    <th>Dimens&otilde;es (cm)</th>
+                    <th>Peso (kg)</th>
+                    <th>Unid.</th>
+                  </tr>
+                </thead>
+                <tbody id="selection-table"></tbody>
+              </table>
+            </div>
+            <div class="action-row">
+              <button class="primary-button" id="calculate-button" type="button">Calcular caixas</button>
+            </div>
+          </section>
+
+          <section class="panel results-panel">
+            <div class="panel-title-row">
+              <h2>Resultado</h2>
+              <div class="result-actions">
+                <button class="ghost-button" id="export-csv-button" type="button" disabled>CSV</button>
+                <button class="ghost-button" id="report-button" type="button" disabled>Relatório</button>
+                <button class="ghost-button" id="print-button" type="button" disabled>PDF</button>
+                <span class="status-pill" id="result-status">Aguardando c&aacute;lculo</span>
+              </div>
+            </div>
+            <div id="results" class="results empty-state">
+              Nenhum c&aacute;lculo dispon&iacute;vel.
+            </div>
+          </section>
+
+          <section class="panel history-panel">
+            <div class="panel-title-row">
+              <h2>Histórico de cálculos</h2>
+              <button class="ghost-button" id="history-export-button" type="button">Baixar histórico</button>
+            </div>
+            <div class="history-filters">
+              <label>
+                Buscar
+                <input id="history-filter-search" type="search" placeholder="Produto ou caixa" autocomplete="off" />
+              </label>
+              <label>
+                De
+                <input id="history-filter-start" type="date" />
+              </label>
+              <label>
+                Até
+                <input id="history-filter-end" type="date" />
+              </label>
+            </div>
+            <div id="history-list" class="history-list empty-state">
+              Nenhum cálculo salvo no histórico.
+            </div>
+          </section>
+
+          <section class="panel backup-panel">
+            <h2>Backup de cadastros</h2>
+            <p>Exporte ou importe caixas e produtos em um arquivo JSON.</p>
+            <div class="auto-backup-status" id="auto-backup-info">Backup automático ainda não criado.</div>
+            <div class="backup-filters" aria-label="Período do backup">
+              <label>
+                De
+                <input id="backup-filter-start" type="date" />
+              </label>
+              <label>
+                Até
+                <input id="backup-filter-end" type="date" />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="ghost-button" id="backup-export-button" type="button">Exportar backup</button>
+              <button class="ghost-button" id="auto-backup-export-button" type="button">Baixar último automático</button>
+              <button class="ghost-button" id="backup-import-button" type="button">Importar backup</button>
+            </div>
+            <input id="backup-import-input" type="file" accept=".json,application/json" hidden />
+          </section>
+
+          <section class="panel audit-panel">
+            <div class="panel-title-row">
+              <h2>Auditoria</h2>
+              <button class="ghost-button" id="audit-export-button" type="button">Baixar auditoria</button>
+            </div>
+            <div id="audit-log-list" class="audit-log-list empty-state">
+              Nenhum evento registrado.
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="boxes-panel">
+        <div class="workspace-grid">
+          <div class="stacked-panels">
+            <section class="panel">
+              <div class="panel-title-row">
+                <h2 id="box-form-title">Adicionar caixa</h2>
+                <button class="ghost-button" id="box-import-button" type="button">Importar CSV</button>
+              </div>
+              <form id="box-form" class="entity-form">
+                <input name="id" type="hidden" />
+                <label>
+                  Nome
+                  <input name="name" type="text" placeholder="Caixa P" required />
+                </label>
+                <label>
+                  Largura (cm)
+                  <input name="width" type="number" min="0.01" step="0.01" required />
+                </label>
+                <label>
+                  Altura (cm)
+                  <input name="height" type="number" min="0.01" step="0.01" required />
+                </label>
+                <label>
+                  Comprimento (cm)
+                  <input name="length" type="number" min="0.01" step="0.01" required />
+                </label>
+                <label>
+                  Peso máximo (kg)
+                  <input name="maxWeight" type="number" min="0" step="0.01" placeholder="Sem limite" />
+                </label>
+                <label>
+                  Estoque disponível
+                  <input name="stock" type="number" min="0" step="1" placeholder="Sem limite" />
+                </label>
+                <div class="form-actions">
+                  <button class="primary-button" id="box-submit-button" type="submit">Adicionar caixa</button>
+                  <button class="ghost-button hidden" id="box-cancel-button" type="button">Cancelar</button>
+                </div>
+              </form>
+              <input id="box-import-input" type="file" accept=".csv,text/csv" hidden />
+            </section>
+
+          </div>
+
+          <section class="panel">
+            <h2>Caixas cadastradas</h2>
+            <div id="boxes-list" class="cards-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="products-panel">
+        <div class="workspace-grid">
+          <section class="panel">
+            <div class="panel-title-row">
+              <h2 id="product-form-title">Adicionar produto</h2>
+              <div class="form-actions">
+                <button class="ghost-button" id="product-import-button" type="button">Importar CSV</button>
+                <button class="ghost-button" id="product-remove-import-button" type="button">Remover por CSV</button>
+              </div>
+            </div>
+            <form id="product-form" class="entity-form">
+              <input name="id" type="hidden" />
+              <label>
+                Nome
+                <input name="name" type="text" placeholder="Produto A" required />
+              </label>
+              <label>
+                Código de barras
+                <input name="barcode" type="text" inputmode="numeric" autocomplete="off" placeholder="7891234567890" />
+              </label>
+              <label>
+                Peso (kg)
+                <input name="weight" type="number" min="0" step="0.01" required />
+              </label>
+              <label>
+                Formato
+                <select name="shape">
+                  <option value="box">Retangular</option>
+                  <option value="round">Redondo</option>
+                </select>
+              </label>
+              <label class="product-rect-field">
+                Largura (cm)
+                <input name="width" type="number" min="0.01" step="0.01" required />
+              </label>
+              <label>
+                Altura (cm)
+                <input name="height" type="number" min="0.01" step="0.01" required />
+              </label>
+              <label class="product-rect-field">
+                Comprimento (cm)
+                <input name="length" type="number" min="0.01" step="0.01" required />
+              </label>
+              <label class="product-round-field hidden">
+                Diâmetro (cm)
+                <input name="diameter" type="number" min="0.01" step="0.01" />
+              </label>
+              <div class="form-actions">
+                <button class="primary-button" id="product-submit-button" type="submit">Adicionar produto</button>
+                <button class="ghost-button hidden" id="product-cancel-button" type="button">Cancelar</button>
+              </div>
+            </form>
+            <input id="product-import-input" type="file" accept=".csv,text/csv" hidden />
+            <input id="product-remove-import-input" type="file" accept=".csv,text/csv" hidden />
+          </section>
+
+          <section class="panel">
+            <div class="panel-title-row">
+              <h2>Produtos cadastrados</h2>
+            </div>
+            <label class="search-field">
+              Pesquisar produto cadastrado
+              <input id="product-list-search" type="search" inputmode="numeric" placeholder="Digite o nome ou leia o código de barras" autocomplete="off" />
+            </label>
+            <div id="products-list" class="cards-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="help-panel">
+        <div class="help-layout">
+          <section class="panel help-hero-panel">
+            <div class="panel-title-row">
+              <h2>Ajuda da operação</h2>
+              <span class="status-pill status-ready">Consulta rápida</span>
+            </div>
+            <div class="help-quick-grid">
+              <article class="help-topic">
+                <h3>Fluxo recomendado</h3>
+                <ol>
+                  <li>Cadastre as caixas disponíveis na aba Caixas.</li>
+                  <li>Cadastre os produtos com dimensões, peso e código de barras.</li>
+                  <li>Na Home, leia os códigos ou informe as quantidades manualmente.</li>
+                  <li>Marque as regras de cada produto e clique em Calcular caixas.</li>
+                  <li>Confira a lista, a ordem de colocação e a visualização 3D.</li>
+                </ol>
+              </article>
+              <article class="help-topic">
+                <h3>Leitura por código</h3>
+                <ul>
+                  <li>Use o campo Código de barras para registrar produtos com scanner.</li>
+                  <li>Quantidade por leitura multiplica a próxima leitura feita e depois volta para 1.</li>
+                  <li>Na aba Código de barras, imprima comandos de quantidade e use 1 quantidade para corrigir a última leitura.</li>
+                  <li>Leia 9999999999999 para finalizar o pedido e calcular automaticamente.</li>
+                  <li>Leia 9999999999998 para iniciar um novo pedido com a leitura limpa.</li>
+                  <li>Leia 9999999999997 duas vezes seguidas para limpar o pedido atual.</li>
+                  <li>Leia 9999999999996 para desfazer a última leitura.</li>
+                  <li>Se o código não existir, use Cadastrar produto para criar o item.</li>
+                  <li>Ctrl+Z desfaz a última leitura registrada.</li>
+                </ul>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title-row">
+              <h2>Regras dos produtos</h2>
+            </div>
+            <div class="help-rule-grid">
+              <article class="help-rule">
+                <strong>Pode girar</strong>
+                <span>Permite testar orientacoes retas e diagonais do produto dentro da caixa.</span>
+              </article>
+              <article class="help-rule">
+                <strong>Em pé</strong>
+                <span>Mantém o produto na orientação vertical durante o empacotamento.</span>
+              </article>
+              <article class="help-rule">
+                <strong>Empilhável</strong>
+                <span>Indica que outros itens podem ser colocados acima desse produto.</span>
+              </article>
+              <article class="help-rule">
+                <strong>Frágil</strong>
+                <span>Prioriza cuidado de empilhamento e destaca o item no resultado.</span>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title-row">
+              <h2>Resultado e 3D</h2>
+            </div>
+            <div class="help-quick-grid">
+              <article class="help-topic">
+                <h3>Como conferir</h3>
+                <ul>
+                  <li>Caixas necessárias mostra a quantidade final de volumes.</li>
+                  <li>Volume ocupado indica o aproveitamento médio das caixas.</li>
+                  <li>Produtos sem caixa aparecem quando nenhuma caixa atende dimensões, peso ou restrições.</li>
+                  <li>A ordem numerada mostra a sequência sugerida de colocação.</li>
+                </ul>
+              </article>
+              <article class="help-topic">
+                <h3>Visualização 3D</h3>
+                <ul>
+                  <li>Arraste para girar a caixa.</li>
+                  <li>Use a roda do mouse para apróximar ou afastar.</li>
+                  <li>Clique em um produto da legenda para destacar no 3D e nas vistas.</li>
+                  <li>Use Tela cheia para ampliar a conferência.</li>
+                </ul>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title-row">
+              <h2>Histórico, exportação e backup</h2>
+            </div>
+            <div class="help-quick-grid">
+              <article class="help-topic">
+                <h3>Histórico</h3>
+                <ul>
+                  <li>Os últimos cálculos ficam salvos na Home.</li>
+                  <li>Use Reabrir para carregar um cálculo e revisar a separação.</li>
+                  <li>Filtros por data e busca ajudam a localizar pedidos anteriores.</li>
+                </ul>
+              </article>
+              <article class="help-topic">
+                <h3>Arquivos</h3>
+                <ul>
+                  <li>CSV baixa a lista do resultado para planilha.</li>
+                  <li>Relatório gera uma versão de conferência por caixa.</li>
+                  <li>PDF abre a impressão do resultado atual.</li>
+                  <li>Backup exporta ou importa caixas e produtos cadastrados.</li>
+                </ul>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel help-shortcuts-panel">
+            <div class="panel-title-row">
+              <h2>Atalhos principais</h2>
+            </div>
+            <div class="help-shortcut-grid">
+              <span><kbd>F2</kbd> Focar leitura</span>
+              <span><kbd>F3</kbd> Buscar seleção</span>
+              <span><kbd>F4</kbd> Buscar cadastro</span>
+              <span><kbd>Alt+1</kbd> Home</span>
+              <span><kbd>Alt+2</kbd> Caixas</span>
+              <span><kbd>Alt+3</kbd> Produtos</span>
+              <span><kbd>Alt+4</kbd> Ajuda</span>
+              <span><kbd>Alt+5</kbd> C&oacute;digo de barras</span>
+              <span><kbd>Ctrl+Enter</kbd> Calcular</span>
+              <span><kbd>Ctrl+Z</kbd> Desfazer leitura</span>
+              <span><kbd>Ctrl+M</kbd> Modo produção</span>
+              <span><kbd>Esc</kbd> Limpar ou focar leitura</span>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="finalizer-panel">
+        <div class="finalizer-layout">
+          <section class="panel finalizer-panel">
+            <div class="panel-title-row finalizer-screen-only">
+              <h2>Códigos de comando</h2>
+            </div>
+            <div class="finalizer-instructions finalizer-screen-only">
+              <h3>Como usar</h3>
+              <ol>
+                <li>Imprima estes códigos e deixe as etiquetas próximas da área de separação.</li>
+                <li>Na Home, leia normalmente todos os produtos do pedido.</li>
+                <li>Leia 2, 3, 4 ou 5 quantidades antes do produto quando a próxima leitura deve somar várias unidades.</li>
+                <li>Leia 1 quantidade depois de um produto para ajustar a última leitura daquele produto para 1 unidade.</li>
+                <li>Depois que o produto for lido, a quantidade volta automaticamente para 1.</li>
+                <li>Quando o último produto for lido, leia Finalizar pedido para calcular as caixas automaticamente.</li>
+                <li>Use Desfazer leitura para remover a última leitura feita sem usar teclado.</li>
+                <li>Para apagar a separação atual, leia Limpar pedido duas vezes seguidas.</li>
+                <li>Depois da conferência, leia Novo pedido para limpar a tela e preparar a próxima separação.</li>
+              </ol>
+            </div>
+            <div class="finalizer-command-list" id="finalizer-command-list"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <template id="entity-card-template">
+      <article class="entity-card">
+        <div>
+          <h3></h3>
+          <p></p>
+        </div>
+        <button class="icon-button" type="button" aria-label="Remover">x</button>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

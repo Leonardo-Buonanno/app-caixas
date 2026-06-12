@@ -1,0 +1,15 @@
+node_modules/
+test-results/
+playwright-report/
+.cache/
+.tmp/
+
+*.log
+debug.log
+
+.env
+.env.*
+!.env.example
+
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,46 @@
+{
+  "savedAt": "2026-05-26T14:24:49.069Z",
+  "appVersion": "1.2.1",
+  "reason": "alteracao_manual",
+  "state": {
+    "boxes": [
+      {
+        "id": "1779805488403-dcaa24ce89a7e",
+        "name": "teste",
+        "width": 22,
+        "height": 16,
+        "length": 24,
+        "maxWeight": 1000,
+        "stock": null,
+        "createdAt": "2026-05-26T14:24:48.403Z",
+        "updatedAt": "2026-05-26T14:24:48.403Z"
+      }
+    ],
+    "products": [],
+    "selection": {},
+    "selectionOptions": {},
+    "calculationMeta": {
+      "reference": "",
+      "user": ""
+    },
+    "history": [],
+    "auditLog": [
+      {
+        "id": "1779805488403-d03ac332193308",
+        "createdAt": "2026-05-26T14:24:48.403Z",
+        "action": "caixa_cadastrada",
+        "detail": "teste"
+      },
+      {
+        "id": "1779805442132-a3832a99cae6f",
+        "createdAt": "2026-05-26T14:24:02.132Z",
+        "action": "estado_servidor_carregado",
+        "detail": "22/05/2026, 09:46"
+      }
+    ],
+    "appSettings": {
+      "productionMode": false
+    },
+    "stateUpdatedAt": "2026-05-26T14:24:48.404Z"
+  }
+}
