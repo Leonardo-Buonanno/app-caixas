@@ -73,6 +73,7 @@ const BARCODE_COMMANDS = [
 ];
 const RESERVED_BARCODES = BARCODE_COMMANDS.map((command) => command.barcode);
 const BARCODE_COMMAND_MAP = new Map(BARCODE_COMMANDS.map((command) => [command.barcode, command]));
+const PRODUCT_NAME_CSV_ALIASES = ["name", "nome", "produto", "product", "descricao", "description"];
 const CODE128_PATTERNS = [
   "212222", "222122", "222221", "121223", "121322", "131222", "122213", "122312",
   "132212", "221213", "221312", "231212", "112232", "122132", "122231", "113222",
@@ -4703,7 +4704,7 @@ function getProductNamesFromCsv(csvText) {
   const headers = rows[0].map(normalizeHeader);
   const names = new Set();
   rows.slice(1).forEach((row) => {
-    const name = getCsvValue(row, headers, ["name", "nome", "produto", "product", "descricao", "description"]);
+    const name = getCsvValue(row, headers, PRODUCT_NAME_CSV_ALIASES);
     if (name) {
       names.add(normalizeImportName(name));
     }
@@ -4845,7 +4846,7 @@ function parseProductCsvRow(row, headers) {
   });
   const product = normalizeProduct({
     id: createId(),
-    name: getCsvValue(row, headers, ["name", "nome"]) || "Produto",
+    name: getCsvValue(row, headers, PRODUCT_NAME_CSV_ALIASES) || "Produto",
     barcode: getCsvValue(row, headers, [
       "barcode",
       "codigobarras",

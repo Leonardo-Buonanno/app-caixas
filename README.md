@@ -111,6 +111,10 @@ Produto Redondo,7899876543210,2,redondo,,15,,10
 
 Para codigo de barras, tambem sao aceitos os cabecalhos `codigo`, `codigo de barras`, `barcode`, `ean` e `gtin`.
 
+Para nome do produto, tambem sao aceitos os cabecalhos `produto`, `product`, `descricao` e `description`.
+
+Se o CSV tiver colunas extras, elas sao ignoradas. O importador usa apenas nome, codigo de barras, peso, formato e dimensoes.
+
 Para produtos redondos, use `formato`/`shape` como `redondo` ou preencha `diametro`.
 
 Arquivos exportados do Magento com `profundidade` tambem sao aceitos:
