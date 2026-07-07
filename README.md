@@ -17,7 +17,7 @@ Depois abra `http://localhost:3000` no navegador.
 
 - Aba `Caixas`: cadastro e edicao de caixas com largura, altura e comprimento em centimetros e peso maximo em kg.
 - Cadastro de estoque por tipo de caixa; se o estoque ficar vazio, o calculo trata a caixa como sem limite.
-- Aba `Produtos`: cadastro e edicao de produtos retangulares ou redondos, com campo opcional de codigo de barras. Produtos redondos usam peso em kg, diametro em centimetros e altura em centimetros.
+- Aba `Produtos`: cadastro e edicao de produtos retangulares ou redondos, com campos opcionais de SKU e codigo de barras. Produtos redondos usam peso em kg, diametro em centimetros e altura em centimetros.
 - Remocao de produtos por CSV: na aba `Produtos`, use `Remover por CSV` e selecione o mesmo arquivo importado para excluir os produtos daquele upload.
 - Aba `Home`: selecao de produtos e calculo de caixas necessarias.
 - Painel `Ler produtos`: leitura por codigo de barras com adicao automatica, quantidade por leitura, feedback visual/sonoro, resumo de conferencia, soma das quantidades, ajuste manual de unidades lidas e calculo direto da leitura.
@@ -38,7 +38,7 @@ Depois abra `http://localhost:3000` no navegador.
 - Download do historico completo pelo app.
 - Backup JSON de caixas e produtos para exportar/importar cadastros.
 - Busca na aba `Produtos`.
-- Busca de produtos por nome ou codigo de barras, incluindo leitura por scanner no campo de busca da aba `Produtos`.
+- Busca de produtos por nome, SKU ou codigo de barras, incluindo leitura por scanner no campo de busca da aba `Produtos`.
 - Ao importar produtos por CSV, produtos com o mesmo nome sao atualizados em vez de duplicados.
 - Visualizacao 3D interativa dos produtos dentro da caixa, com numeros indicando a ordem de colocacao.
 - Lista de ordem e posicao de colocacao com coordenadas X, Y e Z, orientacao final, giro aplicado e cuidados.

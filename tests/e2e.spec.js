@@ -20,6 +20,7 @@ const seededState = {
     {
       id: "product-test",
       name: "Produto Teste",
+      sku: "SKU-TESTE",
       barcode: "1234567890123",
       weight: 1,
       shape: "box",
@@ -103,6 +104,24 @@ async function canvasPixelStats(canvas) {
     return { width, height, nonBlank };
   });
 }
+
+test("produto exibe e pesquisa por SKU", async ({ page }) => {
+  await page.goto("/index.html");
+
+  await page.click('[data-tab="products"]');
+  await expect(page.locator('input[name="sku"]')).toBeVisible();
+  await expect(page.locator("#product-list-search")).not.toHaveAttribute("inputmode", "numeric");
+
+  await page.fill("#product-list-search", "SKU-TESTE");
+  await expect(page.locator("#products-list .product-card")).toHaveCount(1);
+  await expect(page.locator("#products-list .product-card")).toContainText("SKU SKU-TESTE");
+
+  await page.click('[data-tab="home"]');
+  await page.fill("#product-search", "SKU-TESTE");
+  const row = page.locator("#selection-table tr").first();
+  await expect(row).toContainText("Produto Teste");
+  await expect(row).toContainText("SKU SKU-TESTE");
+});
 
 test("fluxo por codigo de barras calcula pedido e renderiza 3D", async ({ page }) => {
   await page.goto("/index.html");

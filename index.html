@@ -257,6 +257,10 @@
                 <input name="name" type="text" placeholder="Produto A" required />
               </label>
               <label>
+                SKU
+                <input name="sku" type="text" autocomplete="off" placeholder="SKU-001" />
+              </label>
+              <label>
                 Código de barras
                 <input name="barcode" type="text" inputmode="numeric" autocomplete="off" placeholder="7891234567890" />
               </label>
@@ -302,7 +306,7 @@
             </div>
             <label class="search-field">
               Pesquisar produto cadastrado
-              <input id="product-list-search" type="search" inputmode="numeric" placeholder="Digite o nome ou leia o código de barras" autocomplete="off" />
+              <input id="product-list-search" type="search" placeholder="Digite nome, SKU ou leia o código de barras" autocomplete="off" />
             </label>
             <div id="products-list" class="cards-list"></div>
           </section>
@@ -321,7 +325,7 @@
                 <h3>Fluxo recomendado</h3>
                 <ol>
                   <li>Cadastre as caixas disponíveis na aba Caixas.</li>
-                  <li>Cadastre os produtos com dimensões, peso e código de barras.</li>
+                  <li>Cadastre os produtos com dimensões, peso, SKU e código de barras.</li>
                   <li>Na Home, leia os códigos ou informe as quantidades manualmente.</li>
                   <li>Marque as regras de cada produto e clique em Calcular caixas.</li>
                   <li>Confira a lista, a ordem de colocação e a visualização 3D.</li>

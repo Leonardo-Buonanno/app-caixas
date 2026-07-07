@@ -1425,9 +1425,48 @@ tbody tr:hover {
   margin-bottom: 18px;
 }
 
+.home-grid .history-panel,
+.home-grid .audit-panel {
+  display: flex;
+  flex-direction: column;
+}
+
 .history-list {
   display: grid;
   gap: 10px;
+}
+
+.history-list,
+.audit-log-list {
+  max-height: clamp(220px, 34vh, 380px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+  scrollbar-color: var(--accent-dark) rgba(8, 35, 63, 0.08);
+  scrollbar-width: thin;
+}
+
+.history-list.empty-state,
+.audit-log-list.empty-state {
+  min-height: 160px;
+  max-height: 190px;
+}
+
+.history-list::-webkit-scrollbar,
+.audit-log-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.history-list::-webkit-scrollbar-track,
+.audit-log-list::-webkit-scrollbar-track {
+  background: rgba(8, 35, 63, 0.08);
+}
+
+.history-list::-webkit-scrollbar-thumb,
+.audit-log-list::-webkit-scrollbar-thumb {
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: var(--accent-dark);
 }
 
 .history-card {

@@ -1,7 +1,7 @@
 {
-  "savedAt": "2026-07-07T12:24:36.693Z",
+  "savedAt": "2026-05-26T14:24:49.069Z",
   "appVersion": "1.2.1",
-  "reason": "auditoria",
+  "reason": "alteracao_manual",
   "state": {
     "boxes": [
       {
@@ -26,12 +26,6 @@
     "history": [],
     "auditLog": [
       {
-        "id": "1783427076033-5e492e643686f",
-        "createdAt": "2026-07-07T12:24:36.033Z",
-        "action": "estado_servidor_carregado",
-        "detail": "26/05/2026, 11:24"
-      },
-      {
         "id": "1779805488403-d03ac332193308",
         "createdAt": "2026-05-26T14:24:48.403Z",
         "action": "caixa_cadastrada",
@@ -47,6 +41,6 @@
     "appSettings": {
       "productionMode": false
     },
-    "stateUpdatedAt": "2026-07-07T12:24:36.033Z"
+    "stateUpdatedAt": "2026-05-26T14:24:48.404Z"
   }
 }

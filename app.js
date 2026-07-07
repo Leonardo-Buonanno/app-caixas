@@ -74,6 +74,7 @@ const BARCODE_COMMANDS = [
 const RESERVED_BARCODES = BARCODE_COMMANDS.map((command) => command.barcode);
 const BARCODE_COMMAND_MAP = new Map(BARCODE_COMMANDS.map((command) => [command.barcode, command]));
 const PRODUCT_NAME_CSV_ALIASES = ["name", "nome", "produto", "product", "descricao", "description"];
+const PRODUCT_SKU_CSV_ALIASES = ["sku", "codigosku", "codigoproduto", "referencia"];
 const CODE128_PATTERNS = [
   "212222", "222122", "222221", "121223", "121322", "131222", "122213", "122312",
   "132212", "221213", "221312", "231212", "112232", "122132", "122231", "113222",
@@ -390,6 +391,7 @@ function readProductForm() {
   return normalizeProduct({
     id: getField(form, "id").value || createId(),
     name: getField(form, "name").value.trim(),
+    sku: getField(form, "sku").value.trim(),
     barcode: getField(form, "barcode").value.trim(),
     weight: getField(form, "weight").value,
     shape,
@@ -456,7 +458,7 @@ function upsertProduct(product) {
     }));
   }
   invalidateProductCache();
-  addAuditLog(action, product.barcode ? `${product.name} (${product.barcode})` : product.name);
+  addAuditLog(action, product.barcode ? `${formatProductNameWithSku(product)} (${product.barcode})` : formatProductNameWithSku(product));
   const savedBarcode = normalizeBarcode(product.barcode);
   resetProductForm();
   commit();
@@ -494,6 +496,7 @@ function editProduct(id) {
 
   getField(elements.productForm, "id").value = product.id;
   getField(elements.productForm, "name").value = product.name;
+  getField(elements.productForm, "sku").value = product.sku || "";
   getField(elements.productForm, "barcode").value = product.barcode || "";
   getField(elements.productForm, "weight").value = product.weight;
   getField(elements.productForm, "shape").value = product.shape || "box";
@@ -697,6 +700,7 @@ function normalizeProduct(product) {
   const id = product.id || createId();
   const createdAt = normalizeDateString(product.createdAt, inferDateFromId(id) || new Date().toISOString());
   const updatedAt = normalizeDateString(product.updatedAt, createdAt);
+  const sku = normalizeSku(product.sku ?? product.SKU ?? product.codigoSku ?? product.codigo_sku);
   const barcode = normalizeBarcode(product.barcode ?? product.codigoBarras ?? product.codigo_barras ?? product.ean ?? product.gtin);
   const shape = getProductShape(product);
   const height = toNumber(product.height, 0);
@@ -706,6 +710,7 @@ function normalizeProduct(product) {
     return {
       id,
       name: String(product.name || "Produto").trim(),
+      sku,
       barcode,
       weight: toNumber(product.weight, 0),
       shape,
@@ -725,6 +730,7 @@ function normalizeProduct(product) {
   return {
     id,
     name: String(product.name || "Produto").trim(),
+    sku,
     barcode,
     weight: toNumber(product.weight, 0),
     shape,
@@ -767,6 +773,14 @@ function normalizeBarcode(value) {
   return String(value || "")
     .trim()
     .replace(/\s+/g, "");
+}
+
+function normalizeSku(value) {
+  return String(value || "").trim();
+}
+
+function getSkuLookupKey(value) {
+  return normalizeSku(value).toLowerCase();
 }
 
 function compareText(a, b) {
@@ -1399,7 +1413,7 @@ function handleEntityListClick(event) {
 
 function getEntitySearchText(item, isBox) {
   const details = isBox ? getBoxDetails(item) : getProductDetails(item);
-  return `${item.name} ${item.barcode || ""} ${details}`.toLowerCase();
+  return `${item.name} ${item.sku || ""} ${item.barcode || ""} ${details}`.toLowerCase();
 }
 
 function getBoxDetails(box) {
@@ -1409,8 +1423,14 @@ function getBoxDetails(box) {
 }
 
 function getProductDetails(product) {
+  const sku = product.sku ? `SKU ${product.sku} | ` : "";
   const barcode = product.barcode ? `código ${product.barcode} | ` : "";
-  return `${barcode}${getProductShapeLabel(product)} | ${formatDimensions(product)} | ${formatNumber(product.weight)} kg`;
+  return `${sku}${barcode}${getProductShapeLabel(product)} | ${formatDimensions(product)} | ${formatNumber(product.weight)} kg`;
+}
+
+function formatProductNameWithSku(product) {
+  const name = String(product?.name || "Produto").trim() || "Produto";
+  return product?.sku ? `${name} [SKU ${product.sku}]` : name;
 }
 
 function getProductShapeLabel(product) {
@@ -1484,6 +1504,7 @@ function renderSelectionTable() {
     row.innerHTML = `
         <td>
           <strong>${escapeHtml(product.name)}</strong>
+          ${product.sku ? `<span class="muted-line">SKU ${escapeHtml(product.sku)}</span>` : ""}
           ${product.barcode ? `<span class="muted-line">Código ${escapeHtml(product.barcode)}</span>` : ""}
         </td>
         <td data-label="Pode girar">
@@ -1589,7 +1610,7 @@ function handleSelectionTableInput(event) {
 }
 
 function getProductSelectionSearchText(product) {
-  return `${product.name} ${product.barcode || ""} ${getProductDetails(product)}`.toLowerCase();
+  return `${product.name} ${product.sku || ""} ${product.barcode || ""} ${getProductDetails(product)}`.toLowerCase();
 }
 
 function scheduleBarcodeAutoReading() {
@@ -1900,6 +1921,7 @@ function renderBarcodeReadList(selectedItems = getSelectedItems()) {
       <div class="barcode-read-item ${product.id === highlightedProductId ? "barcode-read-item-active" : ""}" data-product-id="${escapeHtml(product.id)}">
         <span class="barcode-read-meta">
           <strong>${escapeHtml(product.name)}</strong>
+          ${product.sku ? `<small>SKU ${escapeHtml(product.sku)}</small>` : ""}
           ${product.barcode ? `<small>${escapeHtml(product.barcode)}</small>` : ""}
         </span>
         <label class="barcode-qty-control">
@@ -2320,7 +2342,7 @@ function getFullProductsSummary(products) {
     return "Sem produtos registrados";
   }
 
-  return products.map((product) => `${product.quantity} x ${product.name}`).join(" | ");
+  return products.map((product) => `${product.quantity} x ${formatProductNameWithSku(product)}`).join(" | ");
 }
 
 function getGroupedItemsSummary(items) {
@@ -2328,7 +2350,7 @@ function getGroupedItemsSummary(items) {
     return "";
   }
 
-  return groupItemsByName(items).map((item) => `${item.quantity} x ${item.name}`).join(" | ");
+  return groupItemsByName(items).map((item) => `${item.quantity} x ${formatProductNameWithSku(item)}`).join(" | ");
 }
 
 function getBoxesUsedSummary(packedBoxes) {
@@ -2454,7 +2476,7 @@ function getFilteredHistoryRecords() {
 
 function getHistorySearchText(record) {
   const boxes = (record.result?.packedBoxes || []).map((packedBox) => packedBox.box.name).join(" ");
-  const products = (record.selectedProducts || []).map((product) => product.name).join(" ");
+  const products = (record.selectedProducts || []).map((product) => `${product.name} ${product.sku || ""}`).join(" ");
   return `${products} ${boxes} ${formatHistoryDate(record.createdAt)}`.toLowerCase();
 }
 
@@ -2534,6 +2556,7 @@ function getOrRestoreHistoryProduct(product) {
   }
 
   const barcode = normalizeBarcode(product.barcode);
+  const sku = getSkuLookupKey(product.sku);
   const name = normalizeImportName(product.name);
   const byId = product.id ? state.products.find((item) => item.id === product.id) : null;
   if (byId) {
@@ -2543,6 +2566,11 @@ function getOrRestoreHistoryProduct(product) {
   const byBarcode = barcode ? state.products.find((item) => normalizeBarcode(item.barcode) === barcode) : null;
   if (byBarcode) {
     return byBarcode.id;
+  }
+
+  const bySku = sku ? state.products.find((item) => getSkuLookupKey(item.sku) === sku) : null;
+  if (bySku) {
+    return bySku.id;
   }
 
   const byName = name ? state.products.find((item) => normalizeImportName(item.name) === name) : null;
@@ -2586,7 +2614,7 @@ function getHistoryProductsSummary(products) {
 
   const summary = products
     .slice(0, 3)
-    .map((product) => `${product.quantity} x ${product.name}`)
+    .map((product) => `${product.quantity} x ${formatProductNameWithSku(product)}`)
     .join(", ");
   const remaining = products.length > 3 ? ` +${products.length - 3}` : "";
   return `${summary}${remaining}`;
@@ -3316,7 +3344,7 @@ function renderResults(result, selectedProducts, options = {}) {
     const warning = document.createElement("div");
     warning.className = "warning-box";
     warning.innerHTML = `<strong>Produtos sem caixa compatível:</strong> ${groupItemsByName(result.unpacked)
-      .map((item) => `${item.quantity} x ${escapeHtml(item.name)} (${getUnpackedReason(item, state.boxes)})`)
+      .map((item) => `${item.quantity} x ${escapeHtml(formatProductNameWithSku(item))} (${getUnpackedReason(item, state.boxes)})`)
       .join(", ")}`;
     elements.results.append(warning);
   }
@@ -3384,7 +3412,7 @@ function getValidationMessages(result, selectedProducts = [], options = {}) {
       type: "danger",
       title: "Produtos sem caixa",
       text: groupItemsByName(result.unpacked)
-        .map((item) => `${item.quantity} x ${item.name} (${getUnpackedReason(item, state.boxes)})`)
+        .map((item) => `${item.quantity} x ${formatProductNameWithSku(item)} (${getUnpackedReason(item, state.boxes)})`)
         .join(", "),
     });
   }
@@ -3526,7 +3554,7 @@ function renderPlacementOrder(items) {
               <li class="${item.id === highlightedProductId ? "placement-step-highlight" : ""}" data-product-id="${escapeHtml(item.id)}">
                 <span class="step-number">${index + 1}</span>
                 <div class="step-body">
-                  <strong>${escapeHtml(item.name)}</strong>
+                  <strong>${escapeHtml(formatProductNameWithSku(item))}</strong>
                   <div class="step-meta">
                     <span>${formatPlacementPosition(item.placed)}</span>
                     <span>orientação: ${formatPlacementSize(item.placed)}</span>
@@ -3561,7 +3589,7 @@ function render3DLegend(items) {
             <button class="box-legend-button ${item.id === highlightedProductId ? "legend-highlight" : ""}" type="button" data-product-id="${escapeHtml(item.id)}">
               <span class="legend-swatch" style="background: ${getItemColor(item)}"></span>
               <span class="legend-main">
-                <strong>${escapeHtml(item.name)}</strong>
+                <strong>${escapeHtml(formatProductNameWithSku(item))}</strong>
                 <small>${item.quantity} un. | ${escapeHtml(getPlacementCare(item))}</small>
               </span>
               <span class="legend-tags">
@@ -4164,11 +4192,33 @@ function add3DBoxShell(THREE, root, box) {
   shell.position.y = box.height / 2;
   root.add(shell);
 
-  const gridSize = Math.max(box.width, box.length);
-  const divisions = Math.max(2, Math.min(24, Math.round(gridSize / 5)));
-  const grid = new THREE.GridHelper(gridSize, divisions, 0x08233f, 0xf2a000);
-  grid.position.y = 0.03;
-  root.add(grid);
+  add3DBoxFloorGrid(THREE, root, box);
+}
+
+function add3DBoxFloorGrid(THREE, root, box) {
+  const halfWidth = box.width / 2;
+  const halfLength = box.length / 2;
+  const xDivisions = Math.max(2, Math.min(24, Math.round(box.width / 5)));
+  const zDivisions = Math.max(2, Math.min(24, Math.round(box.length / 5)));
+  const points = [];
+
+  for (let index = 0; index <= xDivisions; index += 1) {
+    const x = -halfWidth + (box.width * index) / xDivisions;
+    points.push(new THREE.Vector3(x, 0.03, -halfLength), new THREE.Vector3(x, 0.03, halfLength));
+  }
+
+  for (let index = 0; index <= zDivisions; index += 1) {
+    const z = -halfLength + (box.length * index) / zDivisions;
+    points.push(new THREE.Vector3(-halfWidth, 0.03, z), new THREE.Vector3(halfWidth, 0.03, z));
+  }
+
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  const material = new THREE.LineBasicMaterial({
+    color: 0xf2a000,
+    transparent: true,
+    opacity: 0.5,
+  });
+  root.add(new THREE.LineSegments(geometry, material));
 }
 
 function add3DProduct(THREE, root, box, item, order) {
@@ -4344,7 +4394,8 @@ function apply3DHighlight(view) {
   view.productObjects.forEach((object) => {
     const isHighlighted = hasHighlight && object.productId === highlightedProductId;
     const isMuted = hasHighlight && !isHighlighted;
-    object.group.scale.setScalar(isHighlighted ? 1.045 : 1);
+    // O destaque nao deve alterar o volume calculado, senao a peca parece sair da caixa ou invadir outra.
+    object.group.scale.setScalar(1);
     object.material.opacity = isMuted ? 0.24 : 0.86;
     if (object.material.emissive) {
       object.material.emissive.set(isHighlighted ? 0xf2a000 : 0x000000);
@@ -4732,13 +4783,20 @@ function importCsv(csvText, type) {
   let updated = 0;
   let skipped = 0;
   let duplicateBarcodes = 0;
+  let duplicateSkus = 0;
   const csvBarcodes = new Set();
+  const csvSkus = new Set();
   const existingProductBarcodes = new Map();
+  const existingProductSkus = new Map();
   const existingProductNames = new Map();
   const indexProductForImport = (product, index) => {
     const barcode = normalizeBarcode(product.barcode);
     if (barcode && !existingProductBarcodes.has(barcode)) {
       existingProductBarcodes.set(barcode, index);
+    }
+    const sku = getSkuLookupKey(product.sku);
+    if (sku && !existingProductSkus.has(sku)) {
+      existingProductSkus.set(sku, index);
     }
     const name = normalizeImportName(product.name);
     if (name && !existingProductNames.has(name)) {
@@ -4764,6 +4822,7 @@ function importCsv(csvText, type) {
       }
 
       const normalizedBarcode = normalizeBarcode(entity.barcode);
+      const normalizedSku = getSkuLookupKey(entity.sku);
       const normalizedName = normalizeImportName(entity.name);
 
       if (normalizedBarcode) {
@@ -4774,10 +4833,21 @@ function importCsv(csvText, type) {
         }
         csvBarcodes.add(normalizedBarcode);
       }
+      if (normalizedSku) {
+        if (csvSkus.has(normalizedSku)) {
+          duplicateSkus += 1;
+          skipped += 1;
+          return;
+        }
+        csvSkus.add(normalizedSku);
+      }
 
       let existingIndex = -1;
       if (normalizedBarcode && existingProductBarcodes.has(normalizedBarcode)) {
         existingIndex = existingProductBarcodes.get(normalizedBarcode);
+      }
+      if (existingIndex < 0 && normalizedSku && existingProductSkus.has(normalizedSku)) {
+        existingIndex = existingProductSkus.get(normalizedSku);
       }
       if (existingIndex < 0 && normalizedName && existingProductNames.has(normalizedName)) {
         existingIndex = existingProductNames.get(normalizedName);
@@ -4808,7 +4878,7 @@ function importCsv(csvText, type) {
     invalidateProductCache();
   }
 
-  return { added, updated, skipped, duplicateBarcodes };
+  return { added, updated, skipped, duplicateBarcodes, duplicateSkus };
 }
 
 function formatImportMessage(result) {
@@ -4818,6 +4888,9 @@ function formatImportMessage(result) {
   }
   if (result.duplicateBarcodes) {
     parts.push(`${result.duplicateBarcodes} códigos duplicados ignorados`);
+  }
+  if (result.duplicateSkus) {
+    parts.push(`${result.duplicateSkus} SKUs duplicados ignorados`);
   }
   parts.push(`${result.skipped} linhas ignoradas`);
   return `${parts.join(". ")}.`;
@@ -4847,6 +4920,7 @@ function parseProductCsvRow(row, headers) {
   const product = normalizeProduct({
     id: createId(),
     name: getCsvValue(row, headers, PRODUCT_NAME_CSV_ALIASES) || "Produto",
+    sku: getCsvValue(row, headers, PRODUCT_SKU_CSV_ALIASES),
     barcode: getCsvValue(row, headers, [
       "barcode",
       "codigobarras",
@@ -5240,6 +5314,7 @@ function buildPackingCsv(result) {
       "caixa",
       "ordem_colocação",
       "produto",
+      "sku_produto",
       "formato_produto",
       "diametro_produto_cm",
       "quantidade",
@@ -5266,6 +5341,7 @@ function buildPackingCsv(result) {
         packedBox.box.name,
         itemIndex + 1,
         item.name,
+        item.sku || "",
         getProductShapeLabel(item),
         isRoundProduct(item) ? formatNumber(item.diameter) : "",
         1,
@@ -5451,13 +5527,14 @@ function buildSeparationReportHtml(record) {
     <h2>Produtos selecionados</h2>
     <table>
       <thead>
-        <tr><th>Produto</th><th>Quantidade</th><th>Dimensões</th><th>Peso unitário</th><th>Regras</th></tr>
+        <tr><th>Produto</th><th>SKU</th><th>Quantidade</th><th>Dimensões</th><th>Peso unitário</th><th>Regras</th></tr>
       </thead>
       <tbody>
         ${selectedProducts
           .map(
             (product) => `<tr>
               <td>${escapeHtml(product.name)}</td>
+              <td>${escapeHtml(product.sku || "")}</td>
               <td>${product.quantity}</td>
               <td>${escapeHtml(formatDimensions(product))}</td>
               <td>${formatNumber(product.weight)} kg</td>
@@ -5485,7 +5562,7 @@ function renderReportBox(packedBox, index) {
     ${Array.isArray(packedBox.warnings) && packedBox.warnings.length ? `<div class="warning">${packedBox.warnings.map(escapeHtml).join("<br>")}</div>` : ""}
     <table>
       <thead>
-        <tr><th>Ordem</th><th>Produto</th><th>Posição</th><th>Orientação</th><th>Giro</th><th>Cuidados</th></tr>
+        <tr><th>Ordem</th><th>Produto</th><th>SKU</th><th>Posição</th><th>Orientação</th><th>Giro</th><th>Cuidados</th></tr>
       </thead>
       <tbody>
         ${sortPlacedItems(packedBox.items)
@@ -5493,6 +5570,7 @@ function renderReportBox(packedBox, index) {
             (item, itemIndex) => `<tr>
               <td>${itemIndex + 1}</td>
               <td>${escapeHtml(item.name)}</td>
+              <td>${escapeHtml(item.sku || "")}</td>
               <td>${escapeHtml(formatPlacementPosition(item.placed))}</td>
               <td>${escapeHtml(formatPlacementSize(item.placed))}</td>
               <td>${escapeHtml(formatRotationApplied(item))}</td>
@@ -5509,7 +5587,7 @@ function renderReportUnpacked(items) {
   return `<section class="warning">
     <h2>Produtos sem caixa compatível</h2>
     <p>${groupItemsByName(items)
-      .map((item) => `${item.quantity} x ${escapeHtml(item.name)} (${escapeHtml(getUnpackedReason(item, state.boxes))})`)
+      .map((item) => `${item.quantity} x ${escapeHtml(formatProductNameWithSku(item))} (${escapeHtml(getUnpackedReason(item, state.boxes))})`)
       .join("<br>")}</p>
   </section>`;
 }
