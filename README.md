@@ -22,10 +22,10 @@ Depois abra `http://localhost:3000` no navegador.
 - Aba `Home`: selecao de produtos e calculo de caixas necessarias.
 - Painel `Ler produtos`: leitura por codigo de barras com adicao automatica, quantidade por leitura, feedback visual/sonoro, resumo de conferencia, soma das quantidades, ajuste manual de unidades lidas e calculo direto da leitura.
 - Persistencia local via `localStorage`.
-- Calculo com rotacao opcional de produtos, incluindo posicoes diagonais por amostragem de angulos, e heuristica de empacotamento 3D.
+- Calculo com rotacao opcional de produtos: quando `pode girar` esta marcado, o produto so gira se isso for necessario para o encaixe.
 - Opcao `manter em pe` na Home: quando marcada, o produto nao pode ser deitado; se tambem puder girar, gira apenas no eixo vertical, incluindo diagonais na base.
 - Quantidades de um mesmo produto podem ser distribuidas em caixas diferentes.
-- Opcoes por produto selecionado na Home: pode girar, empilhavel e fragil.
+- Opcoes por produto selecionado na Home: pode girar se necessario, empilhavel e fragil.
 - As opcoes da Home comecam desmarcadas para cada produto.
 - Resultado com peso, volume ocupado, volume livre, alertas visuais, exportacao CSV, relatorio de separacao e impressao/PDF pelo navegador.
 - Resultado com resumo fixo, barras de ocupacao/peso por caixa e legenda na visualizacao 3D.

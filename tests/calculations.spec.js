@@ -183,6 +183,28 @@ test("diferencia produto sem giro, giro em pe e giro livre", async ({ page }) =>
   expect(uprightRotation.packedBoxes[0].items[0].placed.height).toBe(1);
 });
 
+test("pode girar so aplica giro quando necessario", async ({ page }) => {
+  const boxes = [box({ width: 10, height: 10, length: 10 })];
+  const result = await calculate(page, boxes, [
+    product({
+      width: 6,
+      height: 2,
+      length: 4,
+      canRotate: true,
+    }),
+  ]);
+
+  expect(result.unpacked).toHaveLength(0);
+  expect(result.packedBoxes).toHaveLength(1);
+  expect(result.packedBoxes[0].items[0].placed).toMatchObject({
+    width: 6,
+    height: 2,
+    length: 4,
+  });
+  expect(result.packedBoxes[0].items[0].placed.freeRotation).toBeUndefined();
+  expect(result.packedBoxes[0].items[0].placed.rotation).toBeUndefined();
+});
+
 test("produto redondo so deita quando pode girar livremente", async ({ page }) => {
   const boxes = [box({ width: 12, height: 5, length: 5 })];
   const roundProduct = product({

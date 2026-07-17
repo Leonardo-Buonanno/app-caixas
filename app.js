@@ -1439,7 +1439,7 @@ function getProductShapeLabel(product) {
 
 function getProductRules(product) {
   const rules = [];
-  rules.push(product.canRotate ? "gira" : "não gira");
+  rules.push(product.canRotate ? "gira se necessário" : "não gira");
   if (product.keepUpright) {
     rules.push("manter em pé");
   }
@@ -1507,10 +1507,10 @@ function renderSelectionTable() {
           ${product.sku ? `<span class="muted-line">SKU ${escapeHtml(product.sku)}</span>` : ""}
           ${product.barcode ? `<span class="muted-line">Código ${escapeHtml(product.barcode)}</span>` : ""}
         </td>
-        <td data-label="Pode girar">
+        <td data-label="Gira se necessário">
           <label class="table-checkbox">
             <input class="selection-option-input rotate-input" type="checkbox" data-option="canRotate" ${options.canRotate ? "checked" : ""} />
-            Pode girar
+            Gira se necessário
           </label>
         </td>
         <td data-label="Manter em pé">
@@ -2063,7 +2063,7 @@ function renderBarcodeSummary(selectedItems = getSelectedItems()) {
     <span><strong>${totalUnits}</strong> Unidades</span>
     <span><strong>${totalProducts}</strong> Produtos diferentes</span>
     <span><strong>${productsWithoutRules}</strong> Sem regra marcada</span>
-    <span><strong>${rotateCount}</strong> Pode girar</span>
+    <span><strong>${rotateCount}</strong> Gira se necessário</span>
     <span><strong>${stackableCount}</strong> Empilhável</span>
     <span><strong>${fragileCount}</strong> Frágil </span>
     <span><strong>${uprightCount}</strong> Em pé</span>
@@ -2852,6 +2852,7 @@ function findPlacement(item, spaces, packedItems = []) {
         z: space.z,
         space,
         spaceIndex,
+        rotationPenalty: getOrientationRotationPenalty(item, orientation),
         score,
       };
 
@@ -2866,6 +2867,19 @@ function findPlacement(item, spaces, packedItems = []) {
   });
 
   return best;
+}
+
+function getOrientationRotationPenalty(item, orientation) {
+  return isOrientationRotatedForItem(item, orientation) ? 1 : 0;
+}
+
+function isOrientationRotatedForItem(item, orientation) {
+  return (
+    Boolean(orientation.freeRotation && orientation.rotation) ||
+    Math.abs(orientation.width - item.width) > EPSILON ||
+    Math.abs(orientation.height - item.height) > EPSILON ||
+    Math.abs(orientation.length - item.length) > EPSILON
+  );
 }
 
 function placementOverlapsItems(placement, packedItems) {
@@ -2890,6 +2904,7 @@ function rangesOverlap(aStart, aEnd, bStart, bEnd) {
 
 function comparePlacements(a, b) {
   return (
+    a.rotationPenalty - b.rotationPenalty ||
     a.score - b.score ||
     a.y - b.y ||
     a.z - b.z ||
