@@ -1,5 +1,5 @@
 {
-  "savedAt": "2026-07-27T14:33:33.177Z",
+  "savedAt": "2026-07-07T12:24:36.693Z",
   "appVersion": "1.2.1",
   "reason": "auditoria",
   "state": {
@@ -26,12 +26,6 @@
     "history": [],
     "auditLog": [
       {
-        "id": "1785162812519-75a17fc86273d8",
-        "createdAt": "2026-07-27T14:33:32.519Z",
-        "action": "estado_servidor_carregado",
-        "detail": "07/07/2026, 09:24"
-      },
-      {
         "id": "1783427076033-5e492e643686f",
         "createdAt": "2026-07-07T12:24:36.033Z",
         "action": "estado_servidor_carregado",
@@ -53,6 +47,6 @@
     "appSettings": {
       "productionMode": false
     },
-    "stateUpdatedAt": "2026-07-27T14:33:32.519Z"
+    "stateUpdatedAt": "2026-07-07T12:24:36.033Z"
   }
 }
